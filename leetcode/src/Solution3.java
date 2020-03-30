@@ -60,4 +60,20 @@ public class Solution3 {
         System.out.println(i);
 
     }
+
+    public static int longest(String s ){
+        int i=0;
+        Map<Character,Integer>map=new HashMap<>();
+        int left=0;
+        int l=0;
+        while(i<s.length()){
+            if(map.containsKey(s.charAt(i))){
+                left=Math.max(left,map.get(s.charAt(i)+1));
+            }
+            l=Math.max(l,i-left+1);
+            i++;
+            map.put(s.charAt(i),i);
+        }
+        return l;
+    }
 }
