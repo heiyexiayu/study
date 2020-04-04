@@ -1,3 +1,5 @@
+package leetcode;
+
 import com.sun.java.swing.plaf.windows.WindowsTextAreaUI;
 import com.sun.org.apache.regexp.internal.RE;
 

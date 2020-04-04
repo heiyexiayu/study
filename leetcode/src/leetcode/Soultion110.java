@@ -1,3 +1,5 @@
+package leetcode;
+
 public class Soultion110 {
 
     public static boolean isBalanced(TreeNode root) {
@@ -22,7 +24,7 @@ public class Soultion110 {
     }
     //提前结束    int值不仅存储false结果还可以存储深度
     //如果递归到某一结点不是平衡二叉树，就不需要保存深度值了，直接返回不成立的标志，就不需要再比较或是判断其他节点是不是平衡的了
-//        public  boolean isBalanced(TreeNode root) {
+//        public  boolean isBalanced(leetcode.TreeNode root) {
 //            return recur(root) != -1;
 //
 //        }

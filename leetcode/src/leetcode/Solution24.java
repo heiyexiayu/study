@@ -1,9 +1,11 @@
-import java.util.List;
+package leetcode;
+
+import leetcode.ListNode;
 
 /**
  * 24. 两两交换链表中的节点
  */
-class Solution {
+class Solution24 {
     public static ListNode swapPairs(ListNode head) {
         if(head == null || head.next == null){
             return head;
