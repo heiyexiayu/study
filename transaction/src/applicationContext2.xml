@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--导入外部文件-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!--连接池配置-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driverClass}"></property>
+        <property name="url" value="${jdbc.url}"></property>
+        <property name="username" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+    <!--业务层类-->
+    <bean id="accountService" class="com.spring.transaction.demo2.AccountServiceImpl">
+         <property name="accountDao" ref="accountDao"/>
+    </bean>
+    <bean id="accountDao" class="com.spring.transaction.demo2.AccountDaoImpl">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--配置业务层代理-->
+    <bean id="accountServiceProxy" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <!--配置目标对象-->
+        <property name="target" ref="accountService"/>
+        <!--注入事务管理器-->
+        <property name="transactionManager" ref="transactionManager"/>
+        <!--注入事务属性-->
+        <property name="transactionAttributes">
+            <props>
+                <!--prop格式
+                    * PROPAGATION   传播行为
+                    * ISOLATION     事务隔离级别
+                    * readOnly      只读
+                    * -Exception    发生那些异常回滚
+                    * +Exception    发生那些异常不回滚
+                -->
+                <prop key="transfer">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
+<!--声明式事务管理  基于TransactionProxyFactoryBean-->
