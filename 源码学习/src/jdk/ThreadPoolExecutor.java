@@ -310,6 +310,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * state to a negative value, and clear it upon start (in
      * runWorker).
      */
+    //worker 的run方法是执行提交到线程池中的任务的run方法
     private final class Worker
             extends AbstractQueuedSynchronizer
             implements Runnable
@@ -762,9 +763,11 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             int wc = workerCountOf(c);
 
             // Are workers subject to culling?
-            //判断是否需要把worker部分摧毁   true表示需要摧毁
+            //是否允许超时 （1。核心线程允许超时销毁  2 worker数量大于核心线程数）
             boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
-            //工作线程大于线程池最大值，并且队列中没有任务
+            //1 工作线程大于线程池最大值，或者符合超时的标准
+            //2 并且队列中没有任务或者工作线程大于1
+            // 减少工作线程的场景;1 核心线程超时未获得任务并且允许减少  2非工作线程超时未获得任务
             if ((wc > maximumPoolSize || (timed && timedOut))
                     && (wc > 1 || workQueue.isEmpty())) {// TODO
                 if (compareAndDecrementWorkerCount(c))//workercount-1
@@ -773,16 +776,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             }
 
             try {
-                //如果线程池里的线程数大于核心数量，则使用有超时获取的方式
-                //如果在keepAliveTime时间范围内没有渠道任务，并且worker数量超出核心线程数，
-                // 进入下次for循环时进入 TODO 返回null，结束woerker的run方法。使得线程被销毁（线程执行完run方法，将会等待被系统销毁）
-
+                //take是阻塞取
+                //非核心线程总是以poll从队列中取task
                 //没有超出则使用阻塞获取任务方式从队列中取，没有任务则会阻塞 take方法中的await()     直到有任务被添加入队列，调用signal()方法，唤醒阻塞
                 Runnable r = timed ?
                         workQueue.poll(keepAliveTime, TimeUnit.NANOSECONDS) :
                         workQueue.take();
                 if (r != null)
                     return r;
+                //超时未获得task（只有超时才会取不到任务走到这一行）
                 timedOut = true;
             } catch (InterruptedException retry) {
                 timedOut = false;
@@ -833,7 +835,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *
      * @param w the worker
      */
-    //之所以线程复用，是因为一个worker run方法 for循环取多个任务，直到从队列没有取到任务，退出worker 的run方法
+    //之所以线程复用，是因为一个worker run方法 for循环取多个任务，直到从队列没有取到任务，然后阻塞
     final void runWorker(ThreadPoolExecutor.Worker w) {
         Thread wt = Thread.currentThread();
         Runnable task = w.firstTask;
@@ -877,6 +879,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             //没有任务可执行  结束runworker方法
             completedAbruptly = false;
         } finally {
+            //worker清理
             //后续处理，把这个worker从集合中取出 ，并且统计执行了多少个任务
             processWorkerExit(w, completedAbruptly);
         }
@@ -1026,6 +1029,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         //达到核心线程数  线程池运行，并且成功把任务加入任务队列
         if (isRunning(c) && workQueue.offer(command)) {
             int recheck = ctl.get();
+            //&&前面条件不成立后面的条件不会执行
             if (! isRunning(recheck) && remove(command))
                 reject(command);
             else if (workerCountOf(recheck) == 0)
